@@ -1,0 +1,901 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#162a24">
+  <title>Carnes Premium | Control de ventas</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #192923;
+      --muted: #718078;
+      --paper: #f6f7f3;
+      --surface: #fff;
+      --line: #e7eae5;
+      --green: #245b43;
+      --green-dark: #193f30;
+      --lime: #d9edc9;
+      --orange: #f3a367;
+      --red: #b64c3d;
+      --shadow: 0 12px 32px rgba(26, 46, 36, .06);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--paper); color: var(--ink); }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; }
+    .app-shell { min-height: 100vh; }
+    .topbar {
+      height: 76px; padding: 0 5.5%; display: flex; align-items: center;
+      justify-content: space-between; background: var(--green-dark); color: #fff;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; font-weight: 750; letter-spacing: -.03em; }
+    .brand-mark { width: 39px; height: 39px; display: grid; place-items: center; border-radius: 12px; background: #d9edc9; color: var(--green-dark); font-size: 20px; }
+    .brand small { display: block; margin-top: 2px; color: #b8c9bd; font-size: 11px; font-weight: 500; letter-spacing: .04em; }
+    .local-badge { display: flex; align-items: center; gap: 8px; color: #d9e7dd; font-size: 12px; }
+    .local-badge::before { width: 7px; height: 7px; border-radius: 50%; background: #a6dc91; content: ""; }
+    main { max-width: 1300px; margin: auto; padding: 40px 5.5% 64px; }
+    .heading { display: flex; justify-content: space-between; align-items: end; gap: 20px; margin-bottom: 28px; }
+    .eyebrow { margin: 0 0 8px; color: var(--green); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    h1 { margin: 0; font-size: clamp(26px, 4vw, 36px); letter-spacing: -.045em; }
+    .subtitle { margin: 9px 0 0; color: var(--muted); font-size: 14px; }
+    .date-label { padding: 10px 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface); color: var(--muted); font-size: 12px; white-space: nowrap; }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 26px; }
+    .stat-card { min-height: 132px; padding: 19px 20px; border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); }
+    .stat-top { display: flex; justify-content: space-between; align-items: center; color: var(--muted); font-size: 12px; font-weight: 600; }
+    .stat-icon { width: 32px; height: 32px; display: grid; place-items: center; border-radius: 10px; background: #eef4ec; color: var(--green); font-size: 15px; }
+    .stat-value { margin-top: 13px; font-size: 25px; font-weight: 760; letter-spacing: -.04em; }
+    .stat-note { margin-top: 4px; color: #89948d; font-size: 11px; }
+    .columns { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(270px, .9fr); gap: 20px; align-items: start; }
+    .panel { border: 1px solid var(--line); border-radius: 15px; background: var(--surface); box-shadow: var(--shadow); }
+    .panel + .panel { margin-top: 20px; }
+    .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 20px 21px 16px; }
+    .panel-title { margin: 0; font-size: 16px; letter-spacing: -.025em; }
+    .panel-caption { margin: 5px 0 0; color: var(--muted); font-size: 12px; }
+    .btn { border: 0; border-radius: 9px; padding: 10px 13px; font-size: 12px; font-weight: 700; transition: background .15s ease, transform .15s ease; }
+    .btn:hover { transform: translateY(-1px); }
+    .btn-primary { background: var(--green); color: #fff; }
+    .btn-primary:hover { background: var(--green-dark); }
+    .btn-light { border: 1px solid var(--line); background: #fff; color: var(--ink); }
+    .btn-danger { background: #fff0ed; color: var(--red); }
+    .btn-danger:hover { background: #ffe1dc; }
+    .btn-small { padding: 7px 10px; font-size: 11px; }
+    .tabs { display: flex; gap: 4px; padding: 0 20px; border-bottom: 1px solid var(--line); }
+    .tab { border: 0; border-bottom: 2px solid transparent; padding: 0 11px 12px; background: transparent; color: var(--muted); font-size: 12px; font-weight: 650; }
+    .tab.active { border-bottom-color: var(--green); color: var(--green); }
+    .client-delete-tools { display: flex; align-items: center; gap: 9px; padding: 12px 20px; border-bottom: 1px solid var(--line); }
+    .client-delete-tools[hidden] { display: none; }
+    .client-delete-tools label { color: var(--muted); font-size: 11px; font-weight: 700; }
+    .client-delete-tools select { width: min(280px, 100%); min-height: 35px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: white; color: var(--ink); font: inherit; font-size: 12px; }
+    .client-delete-tools select:focus { border-color: #7ca78a; outline: none; box-shadow: 0 0 0 3px #e7f0e7; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th { padding: 12px 20px; background: #fafbf9; color: #8a958e; font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; white-space: nowrap; }
+    td { padding: 14px 20px; border-top: 1px solid #f0f2ee; font-size: 12px; white-space: nowrap; }
+    td strong { font-weight: 700; }
+    .muted { color: var(--muted); }
+    .amount { font-weight: 720; }
+    .balance { color: var(--red); font-weight: 750; }
+    .paid { color: var(--green); }
+    .status { display: inline-flex; padding: 5px 8px; border-radius: 20px; background: #fff0e7; color: #a55b2d; font-size: 10px; font-weight: 700; }
+    .status.complete { background: #eaf4e6; color: #467241; }
+    .empty { padding: 36px 20px; text-align: center; color: var(--muted); font-size: 12px; }
+    .form-content { padding: 0 20px 20px; }
+    .field { margin-top: 14px; }
+    .field label { display: block; margin-bottom: 6px; color: #536158; font-size: 11px; font-weight: 700; }
+    .field input, .field select, .search-input {
+      width: 100%; min-height: 40px; padding: 9px 11px; border: 1px solid #e2e7e1;
+      border-radius: 8px; outline: none; background: #fff; color: var(--ink); font-size: 12px;
+    }
+    .field input:focus, .field select:focus, .search-input:focus { border-color: #7ca78a; box-shadow: 0 0 0 3px #e7f0e7; }
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+    .sale-item-row { display: grid; grid-template-columns: minmax(130px, 1.4fr) minmax(75px, .7fr) minmax(100px, 1fr) auto; align-items: end; gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+    .sale-item-row .field { min-width: 0; margin-top: 8px; }
+    .sale-item-row .field label { font-size: 10px; }
+    .sale-item-row .field input, .sale-item-row .field select { padding-right: 6px; padding-left: 6px; }
+    .remove-sale-item { margin-bottom: 1px; }
+    .wide { grid-column: 1 / -1; }
+    .form-hint { margin: 12px 0 0; padding: 10px 11px; border-radius: 8px; background: #f2f6ef; color: #617064; font-size: 11px; line-height: 1.5; }
+    .form-total { display: flex; justify-content: space-between; margin: 14px 0 0; padding-top: 13px; border-top: 1px solid var(--line); font-size: 12px; }
+    .form-total strong { font-size: 15px; }
+    .full { width: 100%; margin-top: 15px; }
+    .tool-row { display: flex; align-items: center; gap: 9px; }
+    .search-input { width: min(215px, 35vw); min-height: 35px; }
+    .client-list { padding: 0 20px 10px; }
+    .client-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-top: 1px solid #f0f2ee; }
+    .client-name { font-size: 12px; font-weight: 700; }
+    .client-meta { margin-top: 4px; color: var(--muted); font-size: 10px; }
+    .client-right { display: flex; align-items: center; gap: 10px; }
+    .money { font-size: 12px; font-weight: 750; }
+    .icon-btn { border: 1px solid var(--line); border-radius: 7px; padding: 5px 8px; background: white; color: var(--green); font-size: 10px; font-weight: 700; }
+    .icon-btn.danger { color: var(--red); }
+    .icon-btn:disabled { cursor: not-allowed; opacity: .45; }
+    .overlay { position: fixed; z-index: 5; inset: 0; display: none; place-items: center; padding: 18px; background: rgba(14, 28, 21, .48); }
+    .overlay.open { display: grid; }
+    .modal { width: min(420px, 100%); border-radius: 15px; background: #fff; box-shadow: 0 24px 70px #0003; }
+    .modal.price-modal { width: min(560px, 100%); max-height: min(80vh, 680px); overflow-y: auto; }
+    .modal .panel-head { padding-bottom: 5px; }
+    .modal .form-content { padding-bottom: 22px; }
+    .modal-close { border: 0; background: transparent; color: var(--muted); font-size: 22px; line-height: 1; }
+    .toast { position: fixed; z-index: 10; right: 24px; bottom: 24px; display: none; max-width: calc(100vw - 48px); padding: 13px 17px; border-radius: 10px; background: var(--green-dark); color: #fff; box-shadow: var(--shadow); font-size: 12px; }
+    .toast.show { display: block; animation: appear .2s ease; }
+    @keyframes appear { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    @media (max-width: 850px) {
+      main { padding-top: 30px; }
+      .stats { grid-template-columns: repeat(2, 1fr); }
+      .columns { grid-template-columns: 1fr; }
+      .side-column { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .side-column .panel + .panel { margin-top: 0; }
+    }
+    @media (max-width: 560px) {
+      .topbar { height: 66px; padding: 0 5%; }
+      main { padding: 26px 5% 40px; }
+      .heading { align-items: start; flex-direction: column; margin-bottom: 20px; }
+      .date-label { display: none; }
+      .stats { gap: 10px; }
+      .stat-card { min-height: 116px; padding: 14px; }
+      .stat-value { font-size: 21px; }
+      .side-column { grid-template-columns: 1fr; }
+      .sale-item-row { grid-template-columns: minmax(0, 1fr) minmax(70px, .55fr) minmax(90px, .8fr) auto; gap: 5px; }
+      .panel-head { padding: 17px 15px 14px; }
+      .tabs { padding: 0 13px; }
+      .tab { padding-right: 8px; padding-left: 8px; }
+      th, td { padding-right: 13px; padding-left: 13px; }
+      .tool-row { align-items: stretch; flex-direction: column; }
+      .search-input { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true">✦</div>
+        <div>Carnes Premium<small>VENTAS Y CUENTAS</small></div>
+      </div>
+      <div class="local-badge">Datos guardados en este dispositivo</div>
+    </header>
+    <main>
+      <section class="heading">
+        <div>
+          <p class="eyebrow">Panel del negocio</p>
+          <h1>Control de ventas</h1>
+          <p class="subtitle">Revisa tus ventas, precios y cuentas pendientes.</p>
+        </div>
+        <div class="date-label" id="todayLabel"></div>
+      </section>
+
+      <section class="stats" aria-label="Resumen del negocio">
+        <article class="stat-card"><div class="stat-top">Por cobrar <span class="stat-icon">$</span></div><div class="stat-value" id="debtTotal">$0</div><div class="stat-note">Saldo pendiente de clientes</div></article>
+        <article class="stat-card"><div class="stat-top">Ventas registradas <span class="stat-icon">↗</span></div><div class="stat-value" id="salesTotal">$0</div><div class="stat-note" id="salesCount">0 ventas</div></article>
+        <article class="stat-card"><div class="stat-top">Inversión en productos vendidos <span class="stat-icon">◈</span></div><div class="stat-value" id="costTotal">$0</div><div class="stat-note" id="costNote">Costo de compra por cantidad vendida</div></article>
+        <article class="stat-card"><div class="stat-top">Ganancia bruta <span class="stat-icon">✳</span></div><div class="stat-value" id="profitTotal">$0</div><div class="stat-note">Ventas registradas menos inversión</div></article>
+      </section>
+
+      <div class="columns">
+        <section class="panel">
+          <div class="panel-head">
+            <div><h2 class="panel-title">Movimientos</h2><p class="panel-caption">Ventas y pagos de tus clientes</p></div>
+            <div class="tool-row"><input class="search-input" id="salesSearch" type="search" placeholder="Buscar cliente o producto" aria-label="Buscar movimientos"><button class="btn btn-danger btn-small" id="resetDataBtn" type="button">Empezar de cero</button></div>
+          </div>
+          <div class="tabs" role="tablist" aria-label="Filtrar movimientos">
+            <button class="tab active" data-filter="all" role="tab" aria-selected="true">Todos</button>
+            <button class="tab" data-filter="debt" role="tab" aria-selected="false">Pendientes</button>
+            <button class="tab" data-filter="paid" role="tab" aria-selected="false">Pagados</button>
+          </div>
+          <div class="client-delete-tools" id="clientDeleteTools" hidden>
+            <label for="clientToDelete">Eliminar cliente:</label>
+            <select id="clientToDelete"><option value="">Selecciona un cliente</option></select>
+            <button class="btn btn-danger btn-small" id="deleteSelectedClientBtn" type="button" disabled>Eliminar seleccionado</button>
+            <span class="muted">También elimina sus ventas y saldos.</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Fecha</th><th>Cliente / producto</th><th>Total</th><th>Abonado</th><th>Saldo</th><th>Estado</th><th>Acciones</th></tr></thead>
+              <tbody id="salesRows"></tbody>
+            </table>
+            <div class="empty" id="salesEmpty" hidden>No hay movimientos todavía. Registra una venta para comenzar.</div>
+          </div>
+        </section>
+
+        <aside class="side-column">
+          <section class="panel">
+            <div class="panel-head"><div><h2 class="panel-title">Registrar venta</h2><p class="panel-caption">Agrega varios productos para un mismo cliente</p></div></div>
+            <form class="form-content" id="saleForm">
+              <div class="field"><label for="saleClient">Cliente</label><select id="saleClient" required></select></div>
+              <div class="field"><label>Productos de la venta</label><div id="saleItems"></div></div>
+              <button class="btn btn-light btn-small full" id="addSaleItemBtn" type="button">+ Agregar otro producto</button>
+              <div class="field"><label for="salePaid">Abono inicial (pesos enteros)</label><input id="salePaid" type="number" min="0" step="1" value="0"></div>
+              <p class="form-hint" id="costHint">Los precios de venta se cargan al seleccionar los productos.</p>
+              <div class="form-total"><span>Cantidad solicitada</span><strong id="saleQuantityPreview">0</strong></div>
+              <div class="form-total"><span>Total de la venta</span><strong id="salePreview">$0</strong></div>
+              <button class="btn btn-primary full" type="submit">Guardar venta</button>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><div><h2 class="panel-title">Productos y precios</h2><p class="panel-caption">Precios de venta por unidad</p></div><div class="tool-row"><button class="btn btn-light btn-small" id="showPricesBtn" type="button">Ver precios</button><button class="btn btn-light btn-small" id="showCostsBtn" type="button">Ver precios de compra</button><button class="btn btn-light btn-small" id="addProductBtn" type="button">+ Producto</button></div></div>
+            <div class="client-list" id="productList"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><div><h2 class="panel-title">Cantidades por producto</h2><p class="panel-caption">Acumulado de todas las ventas registradas</p></div></div>
+            <div class="client-list" id="productQuantityList"></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><div><h2 class="panel-title">Clientes y saldos</h2><p class="panel-caption">Cuentas pendientes por cliente</p></div><button class="btn btn-light btn-small" id="addClientBtn" type="button">+ Cliente</button></div>
+            <div class="client-list" id="clientList"></div>
+          </section>
+        </aside>
+      </div>
+    </main>
+  </div>
+
+  <div class="overlay" id="paymentModal" role="dialog" aria-modal="true" aria-labelledby="paymentTitle">
+    <section class="modal">
+      <div class="panel-head"><div><h2 class="panel-title" id="paymentTitle">Registrar abono</h2><p class="panel-caption" id="paymentCaption"></p></div><button class="modal-close" data-close aria-label="Cerrar">&times;</button></div>
+      <form class="form-content" id="paymentForm">
+        <input type="hidden" id="paymentClientId">
+        <div class="field"><label for="paymentAmount">Valor recibido (pesos enteros)</label><input id="paymentAmount" type="number" min="1" step="1" required placeholder="Ej. 20000"></div>
+        <button class="btn btn-light full" id="payFullBalanceBtn" type="button">Abonar el total del saldo</button>
+        <p class="form-hint">Puedes registrar todos los abonos parciales que necesites, sin límite de cantidad. Cada abono se aplica primero a las ventas pendientes más antiguas y no puede superar el saldo restante.</p>
+        <button class="btn btn-primary full" type="submit">Guardar abono</button>
+      </form>
+    </section>
+  </div>
+  <div class="overlay" id="simpleModal" role="dialog" aria-modal="true" aria-labelledby="simpleTitle">
+    <section class="modal">
+      <div class="panel-head"><div><h2 class="panel-title" id="simpleTitle"></h2><p class="panel-caption" id="simpleCaption"></p></div><button class="modal-close" data-close aria-label="Cerrar">&times;</button></div>
+      <form class="form-content" id="simpleForm"></form>
+    </section>
+  </div>
+  <div class="overlay" id="priceModal" role="dialog" aria-modal="true" aria-labelledby="priceTitle">
+    <section class="modal price-modal">
+      <div class="panel-head"><div><h2 class="panel-title" id="priceTitle">Lista de precios</h2><p class="panel-caption">Precios actuales de venta por producto</p></div><button class="modal-close" data-close aria-label="Cerrar">&times;</button></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Producto</th><th>Unidad</th><th>Precio</th></tr></thead>
+          <tbody id="priceRows"></tbody>
+        </table>
+        <div class="empty" id="pricesEmpty" hidden>No hay productos. Agrégalos para crear la lista de precios.</div>
+      </div>
+    </section>
+  </div>
+  <div class="overlay" id="costModal" role="dialog" aria-modal="true" aria-labelledby="costTitle">
+    <section class="modal price-modal">
+      <div class="panel-head"><div><h2 class="panel-title" id="costTitle">Precios de compra</h2><p class="panel-caption">Costo de compra por producto y unidad</p></div><button class="modal-close" data-close aria-label="Cerrar">&times;</button></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Producto</th><th>Unidad</th><th>Precio de compra</th></tr></thead>
+          <tbody id="costRows"></tbody>
+        </table>
+        <div class="empty" id="costsEmpty" hidden>No hay productos con precio de compra registrado.</div>
+      </div>
+    </section>
+  </div>
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = "carnes-premium-data-v1";
+      const currency = new Intl.NumberFormat("es-CO", {
+        style: "currency", currency: "COP", minimumFractionDigits: 0, maximumFractionDigits: 2
+      });
+      const initialState = {
+        clients: [],
+        products: [
+          { id: "catalog-pernil-kg", name: "Pernil", category: "CARNES", unit: "kg", price: 20000, cost: 15000 },
+          { id: "catalog-lomo-kg", name: "Lomo", category: "CARNES", unit: "kg", price: 30000, cost: 22900 },
+          { id: "catalog-lomo-lb", name: "Lomo", category: "CARNES", unit: "lb", price: 17000, cost: 12900 },
+          { id: "catalog-molida-kg", name: "Molida", category: "CARNES", unit: "kg", price: 16000, cost: 12000 },
+          { id: "catalog-molida-lb", name: "Molida", category: "CARNES", unit: "lb", price: 16000, cost: 12000 },
+          { id: "catalog-costilla-kg", name: "Costilla", category: "CARNES", unit: "kg", price: 31000, cost: 23000 },
+          { id: "catalog-costilla-lb", name: "Costilla", category: "CARNES", unit: "lb", price: 17000, cost: 12500 },
+          { id: "catalog-cuajada-lb", name: "Cuajada", category: "QUESOS", unit: "lb", price: 12000, cost: 8900 },
+          { id: "catalog-campesino-lb", name: "Campesino", category: "QUESOS", unit: "lb", price: 13000, cost: 9200 },
+          { id: "catalog-loncha-lb", name: "Loncha", category: "QUESOS", unit: "lb", price: 13500, cost: 10100 },
+          { id: "catalog-doble-crema-lb", name: "Doble crema", category: "QUESOS", unit: "lb", price: 16000, cost: 11500 },
+          { id: "catalog-jamon-lb", name: "Jamón", category: "QUESOS", unit: "lb", price: 11000, cost: 8400 },
+          { id: "catalog-loncha-jamon-lb", name: "Loncha + jamón", category: "QUESOS", unit: "lb", price: 23000, cost: 18500 }
+        ],
+        sales: []
+      };
+      let state;
+      let activeFilter = "all";
+      let toastTimer;
+      const byId = (id) => document.getElementById(id);
+      const money = (value) => currency.format(value || 0);
+      const exactAmount = (value) => Math.round((value + Number.EPSILON) * 100) / 100;
+      const getClient = (id) => state.clients.find((client) => client.id === id);
+      const getProduct = (id) => state.products.find((product) => product.id === id);
+      const totalOf = (sale) => Number.isFinite(sale.totalAmount)
+        ? sale.totalAmount
+        : exactAmount(sale.quantity * sale.price);
+      const balanceOf = (sale) => exactAmount(Math.max(0, totalOf(sale) - sale.paid));
+      const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (char) => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      })[char]);
+
+      function saveState() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        } catch (error) {
+          console.error("No fue posible guardar los datos del negocio.", error);
+          showToast("No se pudieron guardar los cambios. Revisa el espacio disponible del navegador.");
+          throw error;
+        }
+      }
+
+      function loadState() {
+        try {
+          const saved = localStorage.getItem(STORAGE_KEY);
+          if (!saved) {
+            state = initialState;
+            saveState();
+            return;
+          }
+          const parsed = JSON.parse(saved);
+          if (!parsed || !Array.isArray(parsed.clients) || !Array.isArray(parsed.products) || !Array.isArray(parsed.sales)) {
+            throw new Error("El formato de datos guardados no es válido.");
+          }
+          const savedProductIds = new Set(parsed.products.map((product) => product.id));
+          const catalogProducts = initialState.products.filter((product) => !savedProductIds.has(product.id));
+          const savedProducts = parsed.products.map((product) => {
+            const catalogProduct = initialState.products.find((item) => item.id === product.id);
+            return catalogProduct && (product.cost == null || !product.category)
+              ? { ...product, category: product.category || catalogProduct.category, cost: product.cost ?? catalogProduct.cost }
+              : product;
+          });
+          state = { ...parsed, products: [...savedProducts, ...catalogProducts] };
+          delete state.catalogReset;
+        } catch (error) {
+          console.error("No fue posible cargar los datos guardados.", error);
+          if (error instanceof SyntaxError || error.message === "El formato de datos guardados no es válido.") {
+            showToast("Los datos guardados están dañados. Se iniciará una lista nueva.");
+            state = initialState;
+            saveState();
+            return;
+          }
+          showToast("El navegador no permitió leer los datos guardados.");
+          state = initialState;
+        }
+      }
+
+      function showToast(message) {
+        const toast = byId("toast");
+        toast.textContent = message;
+        toast.classList.add("show");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove("show"), 3200);
+      }
+
+      function render() {
+        renderStats();
+        renderSelects();
+        renderProducts();
+        renderProductQuantities();
+        renderClients();
+        renderSales();
+        updateSalePreview();
+      }
+
+      function renderStats() {
+        const salesAmount = exactAmount(state.sales.reduce((sum, sale) => sum + totalOf(sale), 0));
+        const hasAllCosts = state.sales.every((sale) => {
+          const unitCost = Number.isFinite(sale.costPerUnit) ? sale.costPerUnit : getProduct(sale.productId)?.cost;
+          return Number.isFinite(unitCost) && unitCost > 0;
+        });
+        const costAmount = exactAmount(state.sales.reduce((sum, sale) => {
+          const unitCost = Number.isFinite(sale.costPerUnit) ? sale.costPerUnit : getProduct(sale.productId)?.cost;
+          return sum + (Number.isFinite(unitCost) ? exactAmount(sale.quantity * unitCost) : 0);
+        }, 0));
+        const debtAmount = exactAmount(state.sales.reduce((sum, sale) => sum + balanceOf(sale), 0));
+        byId("debtTotal").textContent = money(debtAmount);
+        byId("salesTotal").textContent = money(salesAmount);
+        byId("costTotal").textContent = hasAllCosts ? money(costAmount) : "—";
+        byId("profitTotal").textContent = hasAllCosts ? money(exactAmount(salesAmount - costAmount)) : "—";
+        byId("costNote").textContent = hasAllCosts ? "Cantidad vendida × precio de compra por unidad" : "Completa costos de compra para calcularlo";
+        const saleCount = new Set(state.sales.map((sale) => sale.transactionId || sale.id)).size;
+        byId("salesCount").textContent = `${saleCount} ${saleCount === 1 ? "venta registrada" : "ventas registradas"}`;
+      }
+
+      function renderSelects() {
+        const clientSelect = byId("saleClient");
+        const previousClient = clientSelect.value;
+        clientSelect.innerHTML = `<option value="">Selecciona un cliente</option>${state.clients.map((client) =>
+          `<option value="${escapeHtml(client.id)}">${escapeHtml(client.name)}</option>`).join("")}`;
+        if (state.clients.some((client) => client.id === previousClient)) clientSelect.value = previousClient;
+        document.querySelectorAll(".sale-item-product").forEach((select) => {
+          const previousProduct = select.value;
+          select.innerHTML = productOptions(previousProduct);
+          if (state.products.some((product) => product.id === previousProduct)) select.value = previousProduct;
+        });
+      }
+
+      function productOptions(selectedId = "") {
+        return `<option value="">Selecciona un producto</option>${state.products.map((product) =>
+          `<option value="${escapeHtml(product.id)}" ${product.id === selectedId ? "selected" : ""}>${escapeHtml(product.name)} (${escapeHtml(product.unit || "kg")})</option>`).join("")}`;
+      }
+
+      function addSaleItemRow() {
+        const row = document.createElement("div");
+        row.className = "sale-item-row";
+        row.innerHTML = `
+          <div class="field"><label>Producto</label><select class="sale-item-product" required>${productOptions()}</select></div>
+          <div class="field"><label class="sale-item-quantity-label">Cantidad</label><input class="sale-item-quantity" type="number" min="0.01" step="0.01" placeholder="Ej. 1" required></div>
+          <div class="field"><label>Precio / unidad</label><input class="sale-item-price" type="number" min="1" step="1" placeholder="Precio" required></div>
+          <button class="icon-btn danger remove-sale-item" type="button" aria-label="Quitar producto">Quitar</button>`;
+        byId("saleItems").append(row);
+        return row;
+      }
+
+      function renderProducts() {
+        const target = byId("productList");
+        if (!state.products.length) {
+          target.innerHTML = `<div class="empty">Agrega productos y sus precios de venta.</div>`;
+          return;
+        }
+        target.innerHTML = state.products.map((product) => `
+          <div class="client-row">
+            <div><div class="client-name">${escapeHtml(product.name)} (${escapeHtml(product.unit || "kg")})</div><div class="client-meta">Precio de venta / ${escapeHtml(product.unit || "kg")}${product.cost ? ` · Costo mayorista: ${money(product.cost)} / ${escapeHtml(product.unit || "kg")}` : ""}</div></div>
+            <div class="client-right"><span class="money">${Number.isFinite(product.price) ? money(product.price) : "Sin precio"}</span></div>
+          </div>`).join("");
+      }
+
+      function renderProductQuantities() {
+        const target = byId("productQuantityList");
+        const quantities = new Map();
+        state.sales.forEach((sale) => {
+          if (!Number.isFinite(sale.quantity)) return;
+          const product = getProduct(sale.productId);
+          const unit = sale.unit || product?.unit || "kg";
+          const key = `${sale.productId}:${unit}`;
+          const current = quantities.get(key);
+          if (current) current.quantity += sale.quantity;
+          else quantities.set(key, { name: product?.name || "Producto eliminado", unit, quantity: sale.quantity });
+        });
+        const products = [...quantities.values()].sort((a, b) =>
+          a.name.localeCompare(b.name, "es") || a.unit.localeCompare(b.unit, "es"));
+        if (!products.length) {
+          target.innerHTML = `<div class="empty">Todavía no hay cantidades vendidas.</div>`;
+          return;
+        }
+        target.innerHTML = products.map((product) => `
+          <div class="client-row">
+            <div class="client-name">${escapeHtml(product.name)} (${escapeHtml(product.unit)})</div>
+            <div class="client-right"><span class="money">${product.quantity.toLocaleString("es-CO", { maximumFractionDigits: 2 })} ${escapeHtml(product.unit)}</span></div>
+          </div>`).join("");
+      }
+
+      function renderPriceList() {
+        const products = [...state.products].sort((a, b) => a.name.localeCompare(b.name, "es"));
+        byId("pricesEmpty").hidden = products.length > 0;
+        byId("priceRows").innerHTML = products.map((product) => `
+          <tr>
+            <td><strong>${escapeHtml(product.name)}</strong></td>
+            <td>${escapeHtml(product.unit || "kg")}</td>
+            <td class="amount">${Number.isFinite(product.price) ? money(product.price) : "Sin precio"}</td>
+          </tr>`).join("");
+      }
+
+      function renderCostList() {
+        const categories = ["CARNES", "QUESOS", "OTROS"];
+        const products = [...state.products]
+          .filter((product) => Number.isFinite(product.cost) && product.cost > 0)
+          .sort((a, b) => categories.indexOf(a.category || "OTROS") - categories.indexOf(b.category || "OTROS")
+            || a.name.localeCompare(b.name, "es")
+            || (a.unit || "kg").localeCompare(b.unit || "kg"));
+        byId("costsEmpty").hidden = products.length > 0;
+        byId("costRows").innerHTML = categories.map((category) => {
+          const categoryProducts = products.filter((product) => (product.category || "OTROS") === category);
+          if (!categoryProducts.length) return "";
+          return `<tr><th colspan="3">${category}</th></tr>${categoryProducts.map((product) => `
+            <tr>
+              <td><strong>${escapeHtml(product.name)}</strong></td>
+              <td>${escapeHtml(product.unit || "kg")}</td>
+              <td class="amount">${money(product.cost)}</td>
+            </tr>`).join("")}`;
+        }).join("");
+      }
+
+      function renderClients() {
+        const target = byId("clientList");
+        if (!state.clients.length) {
+          target.innerHTML = `<div class="empty">Agrega un cliente para registrar ventas.</div>`;
+          return;
+        }
+        target.innerHTML = state.clients.map((client) => {
+          const clientSales = state.sales.filter((sale) => sale.clientId === client.id);
+          const debt = clientSales.reduce((sum, sale) => sum + balanceOf(sale), 0);
+          const saleCount = new Set(clientSales.map((sale) => sale.transactionId || sale.id)).size;
+          return `<div class="client-row">
+            <div><div class="client-name">${escapeHtml(client.name)}</div><div class="client-meta">${saleCount} ${saleCount === 1 ? "venta" : "ventas"}${client.phone ? ` · ${escapeHtml(client.phone)}` : ""}</div></div>
+            <div class="client-right">
+              <span class="money ${debt ? "balance" : "paid"}">${money(debt)}</span>
+              <button class="icon-btn" data-payment="${escapeHtml(client.id)}" ${debt ? "" : "disabled"}>Abonar</button>
+              <button class="icon-btn danger" data-delete-client="${escapeHtml(client.id)}" aria-label="Eliminar a ${escapeHtml(client.name)}" title="Eliminar cliente">Eliminar</button>
+            </div>
+          </div>`;
+        }).join("");
+      }
+
+      function renderSales() {
+        const query = byId("salesSearch").value.trim().toLocaleLowerCase("es");
+        const deleteTools = byId("clientDeleteTools");
+        const clientSelect = byId("clientToDelete");
+        const selectedClientId = clientSelect.value;
+        deleteTools.hidden = activeFilter !== "all";
+        const clientsByDebt = state.clients.map((client) => {
+          const debt = state.sales
+            .filter((sale) => sale.clientId === client.id)
+            .reduce((sum, sale) => sum + balanceOf(sale), 0);
+          return { client, debt };
+        });
+        const renderClientOptions = (hasDebt) => clientsByDebt
+          .filter(({ debt }) => (debt > 0) === hasDebt)
+          .map(({ client, debt }) => `<option value="${escapeHtml(client.id)}">${escapeHtml(client.name)}${hasDebt ? ` · debe ${money(debt)}` : ""}</option>`)
+          .join("");
+        clientSelect.innerHTML = `<option value="">Selecciona un cliente</option>
+          <optgroup label="Pagados">${renderClientOptions(false)}</optgroup>
+          <optgroup label="Pendientes">${renderClientOptions(true)}</optgroup>`;
+        if (state.clients.some((client) => client.id === selectedClientId)) clientSelect.value = selectedClientId;
+        byId("deleteSelectedClientBtn").disabled = !clientSelect.value;
+        const clientBalances = new Map();
+        state.sales.forEach((sale) => {
+          clientBalances.set(sale.clientId, (clientBalances.get(sale.clientId) || 0) + balanceOf(sale));
+        });
+        const groups = new Map();
+        [...state.sales].sort((a, b) => new Date(b.date) - new Date(a.date)).forEach((sale) => {
+          const transactionId = sale.transactionId || sale.id;
+          if (!groups.has(transactionId)) groups.set(transactionId, []);
+          groups.get(transactionId).push(sale);
+        });
+        const sales = [...groups.values()].map((items) => {
+          const firstSale = items[0];
+          const products = new Map();
+          items.forEach((sale) => {
+            const product = getProduct(sale.productId);
+            const productName = product?.name || "Producto eliminado";
+            const unit = sale.unit || product?.unit || "kg";
+            const key = `${sale.productId}:${unit}`;
+            const current = products.get(key);
+            if (current) current.quantity += sale.quantity;
+            else products.set(key, { name: productName, quantity: sale.quantity, unit });
+          });
+          return {
+            clientId: firstSale.clientId,
+            clientName: getClient(firstSale.clientId)?.name || firstSale.clientName || "Cliente eliminado",
+            clientBalance: clientBalances.get(firstSale.clientId) || 0,
+            items,
+            products: [...products.values()],
+            total: items.reduce((sum, sale) => sum + totalOf(sale), 0),
+            paid: items.reduce((sum, sale) => sum + sale.paid, 0),
+            balance: items.reduce((sum, sale) => sum + balanceOf(sale), 0),
+            transactionId: firstSale.transactionId || firstSale.id,
+            date: firstSale.date
+          };
+        }).filter((sale) => {
+          const productNames = sale.products.map((product) => product.name).join(" ");
+          const matchesText = `${sale.clientName} ${productNames}`.toLocaleLowerCase("es").includes(query);
+          const matchesFilter = activeFilter === "all" || (activeFilter === "debt" && sale.balance > 0) || (activeFilter === "paid" && sale.balance === 0);
+          return matchesText && matchesFilter;
+        });
+        const rows = byId("salesRows");
+        byId("salesEmpty").hidden = sales.length > 0;
+        if (!sales.length) {
+          rows.innerHTML = "";
+          return;
+        }
+        rows.innerHTML = sales.map((sale) => {
+          const date = new Date(sale.date).toLocaleDateString("es-CO", { day: "2-digit", month: "short", year: "numeric" });
+          const products = sale.products.map((product) =>
+            escapeHtml(product.name)).join("<br>");
+          return `<tr>
+            <td class="muted">${date}</td>
+            <td><strong>${escapeHtml(sale.clientName)}</strong><br><span class="muted">${products}</span></td>
+            <td class="amount">${money(sale.total)}</td>
+            <td class="paid">${money(sale.paid)}</td>
+            <td class="${sale.balance ? "balance" : "paid"}">${money(sale.balance)}</td>
+            <td><span class="status ${sale.balance === 0 ? "complete" : ""}">${sale.balance === 0 ? "Pagado" : "Pendiente"}</span></td>
+            <td>${activeFilter === "all" ? `<button class="icon-btn danger" data-delete-sale="${escapeHtml(sale.transactionId)}" aria-label="Eliminar este registro">Eliminar registro</button>` : ""}</td>
+          </tr>`;
+        }).join("");
+      }
+
+      function updateSalePreview() {
+        const rows = [...document.querySelectorAll(".sale-item-row")];
+        const items = rows.map((row) => {
+          const quantity = Number(row.querySelector(".sale-item-quantity").value) || 0;
+          const price = Number(row.querySelector(".sale-item-price").value) || 0;
+          const product = getProduct(row.querySelector(".sale-item-product").value);
+          const unit = product?.unit || "kg";
+          row.querySelector(".sale-item-quantity-label").textContent = `Cantidad (${unit})`;
+          return { quantity, price, product };
+        });
+        const complete = items.every((item) => item.product && item.quantity > 0 && item.price > 0);
+        const total = exactAmount(items.reduce((sum, item) =>
+          sum + exactAmount(item.quantity * item.price), 0));
+        const quantityTotals = items.reduce((totals, item) => {
+          if (item.product && item.quantity > 0) {
+            const unit = item.product.unit || "kg";
+            totals[unit] = (totals[unit] || 0) + item.quantity;
+          }
+          return totals;
+        }, {});
+        const quantitySummary = Object.entries(quantityTotals)
+          .map(([unit, quantity]) => `${quantity.toLocaleString("es-CO", { maximumFractionDigits: 2 })} ${unit}`)
+          .join(" · ");
+        const investment = exactAmount(items.reduce((sum, item) =>
+          sum + (Number.isFinite(item.product?.cost) ? exactAmount(item.quantity * item.product.cost) : 0), 0));
+        const hasAllCosts = complete && items.every((item) => Number.isFinite(item.product?.cost));
+        byId("saleQuantityPreview").textContent = quantitySummary || "0";
+        byId("salePreview").textContent = complete ? money(total) : "Completa los productos";
+        byId("costHint").textContent = hasAllCosts
+          ? `Inversión estimada: ${money(investment)} · Ganancia estimada: ${money(total - investment)}.`
+          : "El total se calcula exactamente con la cantidad y el precio unitario ingresados.";
+      }
+
+      function openSimpleModal(kind) {
+        const form = byId("simpleForm");
+        if (kind === "client") {
+          byId("simpleTitle").textContent = "Agregar cliente";
+          byId("simpleCaption").textContent = "Registra a quién le vendes.";
+          form.innerHTML = `
+            <div class="field"><label for="newName">Nombre del cliente</label><input id="newName" required maxlength="70" placeholder="Nombre y apellido"></div>
+            <div class="field"><label for="newPhone">Teléfono (opcional)</label><input id="newPhone" maxlength="30" placeholder="Número de contacto"></div>
+            <button class="btn btn-primary full" type="submit">Guardar cliente</button>`;
+        } else {
+          byId("simpleTitle").textContent = "Agregar producto";
+          byId("simpleCaption").textContent = "Registra el precio de venta y la unidad del producto.";
+          form.innerHTML = `
+            <div class="field"><label for="newName">Nombre del producto</label><input id="newName" required maxlength="70" placeholder="Ej. Queso doble crema"></div>
+            <div class="field"><label for="newUnit">Unidad</label><select id="newUnit" required><option value="kg">Kilogramo (kg)</option><option value="lb">Libra (lb)</option></select></div>
+            <div class="field"><label for="newPrice">Precio de venta</label><input id="newPrice" type="number" step="any" required placeholder="Ej. 18000"></div>
+            <div class="field"><label for="newCost">Costo mayorista (opcional)</label><input id="newCost" type="number" step="any" placeholder="Ej. 12000"></div>
+            <button class="btn btn-primary full" type="submit">Guardar producto</button>`;
+        }
+        form.dataset.kind = kind;
+        byId("simpleModal").classList.add("open");
+        byId("newName").focus();
+      }
+
+      function applyPayment(clientId, amount) {
+        const clientSales = state.sales.filter((sale) => sale.clientId === clientId && balanceOf(sale) > 0)
+          .sort((a, b) => new Date(a.date) - new Date(b.date));
+        let remaining = amount;
+        for (const sale of clientSales) {
+          const applied = Math.min(remaining, balanceOf(sale));
+          sale.paid += applied;
+          remaining -= applied;
+          if (remaining <= 0) break;
+        }
+        return amount - remaining;
+      }
+
+      function deleteClient(clientId) {
+        const client = getClient(clientId);
+        if (!client) return;
+        const clientSales = state.sales.filter((sale) => sale.clientId === client.id);
+        const debt = clientSales.reduce((sum, sale) => sum + balanceOf(sale), 0);
+        const confirmation = debt > 0
+          ? `¿Eliminar a ${client.name}? Se borrarán el cliente, todas sus ventas y su saldo pendiente de ${money(debt)}. Esta acción no se puede deshacer.`
+          : `¿Eliminar a ${client.name}? También se borrarán sus ventas del historial. Esta acción no se puede deshacer.`;
+        if (!window.confirm(confirmation)) return;
+        state.clients = state.clients.filter((item) => item.id !== client.id);
+        state.sales = state.sales.filter((sale) => sale.clientId !== client.id);
+        saveState();
+        render();
+        showToast("Cliente, ventas e historial de saldos eliminados.");
+      }
+
+      function deleteSaleRecord(transactionId) {
+        const saleItems = state.sales.filter((sale) => (sale.transactionId || sale.id) === transactionId);
+        if (!saleItems.length) return;
+        const clientName = getClient(saleItems[0].clientId)?.name || saleItems[0].clientName || "Cliente eliminado";
+        const total = saleItems.reduce((sum, sale) => sum + totalOf(sale), 0);
+        const debt = saleItems.reduce((sum, sale) => sum + balanceOf(sale), 0);
+        if (!window.confirm(`¿Eliminar este registro de ${clientName}? Se borrarán sus productos, total ${money(total)}${debt > 0 ? ` y saldo pendiente de ${money(debt)}` : ""}. Esta acción no se puede deshacer.`)) return;
+        state.sales = state.sales.filter((sale) => (sale.transactionId || sale.id) !== transactionId);
+        saveState();
+        render();
+        showToast("Registro de venta eliminado.");
+      }
+
+      byId("todayLabel").textContent = new Date().toLocaleDateString("es-CO", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+      loadState();
+      render();
+      addSaleItemRow();
+      updateSalePreview();
+
+      document.querySelectorAll(".tab").forEach((tab) => tab.addEventListener("click", () => {
+        document.querySelectorAll(".tab").forEach((item) => {
+          const selected = item === tab;
+          item.classList.toggle("active", selected);
+          item.setAttribute("aria-selected", String(selected));
+        });
+        activeFilter = tab.dataset.filter;
+        renderSales();
+      }));
+      byId("salesSearch").addEventListener("input", renderSales);
+      byId("showPricesBtn").addEventListener("click", () => {
+        renderPriceList();
+        byId("priceModal").classList.add("open");
+      });
+      byId("showCostsBtn").addEventListener("click", () => {
+        renderCostList();
+        byId("costModal").classList.add("open");
+      });
+      byId("resetDataBtn").addEventListener("click", () => {
+        const confirmed = window.confirm("¿Borrar todo el historial, clientes y productos? Esta acción no se puede deshacer.");
+        if (!confirmed) return;
+        state = { clients: [], products: initialState.products.map((product) => ({ ...product })), sales: [] };
+        saveState();
+        byId("saleForm").reset();
+        byId("saleItems").innerHTML = "";
+        addSaleItemRow();
+        byId("salePaid").value = "0";
+        byId("salesSearch").value = "";
+        activeFilter = "all";
+        document.querySelectorAll(".tab").forEach((tab) => {
+          const selected = tab.dataset.filter === "all";
+          tab.classList.toggle("active", selected);
+          tab.setAttribute("aria-selected", String(selected));
+        });
+        render();
+        showToast("Datos borrados. Ya puedes empezar de cero.");
+      });
+      byId("addSaleItemBtn").addEventListener("click", () => {
+        addSaleItemRow();
+        updateSalePreview();
+      });
+      byId("saleItems").addEventListener("input", updateSalePreview);
+      byId("saleItems").addEventListener("change", (event) => {
+        if (event.target.matches(".sale-item-product")) {
+          const product = getProduct(event.target.value);
+          const row = event.target.closest(".sale-item-row");
+          row.querySelector(".sale-item-price").value = product && Number.isFinite(product.price) ? String(product.price) : "";
+        }
+        updateSalePreview();
+      });
+      byId("saleItems").addEventListener("click", (event) => {
+        if (!event.target.closest(".remove-sale-item")) return;
+        const rows = document.querySelectorAll(".sale-item-row");
+        if (rows.length === 1) {
+          rows[0].querySelector(".sale-item-product").value = "";
+          rows[0].querySelector(".sale-item-quantity").value = "";
+          rows[0].querySelector(".sale-item-price").value = "";
+        } else {
+          event.target.closest(".sale-item-row").remove();
+        }
+        updateSalePreview();
+      });
+
+      byId("saleForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const clientId = byId("saleClient").value;
+        const items = [...document.querySelectorAll(".sale-item-row")].map((row) => ({
+          product: getProduct(row.querySelector(".sale-item-product").value),
+          quantity: Number(row.querySelector(".sale-item-quantity").value),
+          price: Number(row.querySelector(".sale-item-price").value)
+        }));
+        const total = exactAmount(items.reduce((sum, item) =>
+          sum + exactAmount(item.quantity * item.price), 0));
+        const paid = Number(byId("salePaid").value) || 0;
+        if (!getClient(clientId)) return showToast("Selecciona un cliente válido.");
+        if (!items.length || items.some((item) => !item.product)) return showToast("Selecciona un producto en cada línea de la venta.");
+        if (items.some((item) => !Number.isFinite(item.quantity) || item.quantity <= 0 || !Number.isFinite(item.price) || item.price <= 0)) return showToast("La cantidad y el precio de cada producto deben ser mayores que cero.");
+        if (paid < 0 || paid > total) return showToast("El abono debe estar entre cero y el total de la venta.");
+        const transactionId = crypto.randomUUID();
+        const date = new Date().toISOString();
+        let remainingPaid = paid;
+        items.forEach(({ product, quantity, price }) => {
+          const itemTotal = exactAmount(quantity * price);
+          const itemPaid = Math.min(remainingPaid, itemTotal);
+          state.sales.push({
+            id: crypto.randomUUID(), transactionId, clientId, productId: product.id,
+            quantity, unit: product.unit || "kg", price, totalAmount: itemTotal, costPerUnit: product.cost,
+            paid: itemPaid, date
+          });
+          remainingPaid -= itemPaid;
+        });
+        saveState();
+        event.currentTarget.reset();
+        byId("saleItems").innerHTML = "";
+        addSaleItemRow();
+        byId("salePaid").value = "0";
+        render();
+        showToast("Venta guardada correctamente.");
+      });
+
+      byId("addClientBtn").addEventListener("click", () => openSimpleModal("client"));
+      byId("addProductBtn").addEventListener("click", () => openSimpleModal("product"));
+      const handleClientActions = (event) => {
+        const button = event.target.closest("[data-payment], [data-delete-client], [data-delete-sale]");
+        if (!button) return;
+        if (button.hasAttribute("data-delete-sale")) {
+          deleteSaleRecord(button.dataset.deleteSale);
+          return;
+        }
+        if (button.hasAttribute("data-delete-client")) {
+          deleteClient(button.dataset.deleteClient);
+          return;
+        }
+        const client = getClient(button.dataset.payment);
+        if (!client) return;
+        const debt = state.sales.filter((sale) => sale.clientId === client.id).reduce((sum, sale) => sum + balanceOf(sale), 0);
+        byId("paymentClientId").value = client.id;
+        byId("paymentCaption").textContent = `${client.name} · debe ${money(debt)}`;
+        byId("paymentAmount").max = String(debt);
+        byId("paymentModal").classList.add("open");
+        byId("paymentAmount").focus();
+      };
+      byId("clientList").addEventListener("click", handleClientActions);
+      byId("salesRows").addEventListener("click", handleClientActions);
+      byId("clientToDelete").addEventListener("change", (event) => {
+        byId("deleteSelectedClientBtn").disabled = !event.currentTarget.value;
+      });
+      byId("deleteSelectedClientBtn").addEventListener("click", () => {
+        deleteClient(byId("clientToDelete").value);
+      });
+
+      byId("payFullBalanceBtn").addEventListener("click", () => {
+        const clientId = byId("paymentClientId").value;
+        const debt = state.sales
+          .filter((sale) => sale.clientId === clientId)
+          .reduce((sum, sale) => sum + balanceOf(sale), 0);
+        if (debt <= 0) return showToast("Este cliente no tiene saldo pendiente.");
+        byId("paymentAmount").value = String(debt);
+        byId("paymentAmount").focus();
+      });
+
+      byId("simpleForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const name = byId("newName").value.trim();
+        if (!name) return showToast("Escribe un nombre válido.");
+        if (form.dataset.kind === "client") {
+          state.clients.push({ id: crypto.randomUUID(), name, phone: byId("newPhone").value.trim() });
+          saveState();
+          byId("simpleModal").classList.remove("open");
+          render();
+          showToast("Cliente agregado correctamente.");
+          return;
+        }
+        const price = Number(byId("newPrice").value);
+        const costInput = byId("newCost").value;
+        const cost = costInput ? Number(costInput) : null;
+        if (!Number.isFinite(price) || price <= 0) return showToast("El precio de venta debe ser mayor que cero.");
+        if (costInput && (!Number.isFinite(cost) || cost <= 0)) return showToast("El costo mayorista debe ser mayor que cero o quedar vacío.");
+        state.products.push({ id: crypto.randomUUID(), name, unit: byId("newUnit").value, price, cost });
+        saveState();
+        byId("simpleModal").classList.remove("open");
+        render();
+        showToast("Producto y precio guardados correctamente.");
+      });
+
+      byId("paymentForm").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const clientId = byId("paymentClientId").value;
+        const amount = Number(byId("paymentAmount").value);
+        const debt = state.sales.filter((sale) => sale.clientId === clientId).reduce((sum, sale) => sum + balanceOf(sale), 0);
+        if (!Number.isFinite(amount) || !Number.isInteger(amount) || amount <= 0 || amount > debt) return showToast("Ingresa un abono en pesos enteros, mayor que cero y que no supere el saldo pendiente.");
+        applyPayment(clientId, amount);
+        saveState();
+        byId("paymentModal").classList.remove("open");
+        event.currentTarget.reset();
+        render();
+        showToast("Abono registrado y aplicado a las ventas pendientes.");
+      });
+
+      document.querySelectorAll("[data-close]").forEach((button) => button.addEventListener("click", () => {
+        button.closest(".overlay").classList.remove("open");
+      }));
+      document.querySelectorAll(".overlay").forEach((overlay) => overlay.addEventListener("click", (event) => {
+        if (event.target === overlay) overlay.classList.remove("open");
+      }));
+      document.addEventListener("keydown", (event) => {
+        if (event.key === "Escape") document.querySelectorAll(".overlay.open").forEach((modal) => modal.classList.remove("open"));
+      });
+    })();
+  </script>
+</body>
+</html>
