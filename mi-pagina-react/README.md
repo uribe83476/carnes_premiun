@@ -1,32 +1,31 @@
-# React + TypeScript + Vite
+# Fila de turnos
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Panel de turnos en HTML, CSS y JavaScript. Puedes abrir `index.html` directamente
+en un navegador, sin instalar dependencias, o compilar y desplegar el sitio en Vercel.
 
-Currently, two official plugins are available:
+Incluye cola numerada, búsqueda, eliminación de turnos, historial de atención,
+resumen de pendientes y atendidos, exportación CSV y guardado local en el navegador.
+Los datos se guardan en el dispositivo actual y no se sincronizan entre dispositivos.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Ejecutar localmente
 
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm install
+npm run dev
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+También puedes abrir `index.html` desde el explorador de archivos para ver la
+página localmente.
+
+## Desplegar en Vercel
+
+1. Sube este proyecto a un repositorio de Git.
+2. En Vercel, importa el repositorio y establece `mi-pagina-react` como **Root Directory** si el repositorio también contiene otros proyectos.
+3. Usa estos ajustes de compilación:
+   - **Framework Preset:** Vite
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+4. Selecciona **Deploy**.
+
+La configuración de compilación también está definida en `vercel.json`. Vercel
+publica el contenido generado en `dist`.

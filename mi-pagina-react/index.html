@@ -1,157 +1,904 @@
 <!DOCTYPE html>
 <html lang="es">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Fila de turnos</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 700px;
-      margin: 40px auto;
-      padding: 0 16px;
-      background-color: #f5f0fa;
-      color: #222;
-    }
-
-    h1, h2 {
-      color: #633a8c;
-    }
-
-    section {
-      margin-bottom: 20px;
-      padding: 20px;
-      background-color: white;
-      border: 1px solid #e0d3ed;
-      border-radius: 8px;
-    }
-
-    label {
-      display: block;
-      margin-top: 12px;
-    }
-
-    input {
-      width: 100%;
-      box-sizing: border-box;
-      margin-top: 5px;
-      padding: 9px;
-      border: 1px solid #cdb9df;
-      border-radius: 4px;
-    }
-
-    input:focus {
-      outline: 2px solid #9a70bd;
-      border-color: #7b4ba3;
-    }
-
-    button {
-      margin-top: 15px;
-      padding: 10px 14px;
-      border: 0;
-      border-radius: 5px;
-      background-color: #70449a;
-      color: white;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background-color: #573276;
-    }
-
-    li {
-      margin: 10px 0;
-    }
-
-    #mensaje {
-      min-height: 20px;
-      color: #21132f;
-    }
-  </style>
-</head>
-<body>
-  <h1>Fila de turnos</h1>
-
-  <section>
-    <h2>Agregar una persona</h2>
-    <form id="formulario">
-      <label for="nombre">Nombre:</label>
-      <input id="nombre" type="text" placeholder="Escribe el nombre" required>
-
-      <label for="motivo">Motivo:</label>
-      <input id="motivo" type="text" placeholder="Escribe el motivo" required>
-
-      <button type="submit">Agregar turno</button>
-    </form>
-  </section>
-
-  <section>
-    <h2>Personas en la fila</h2>
-    <p id="siguiente">La fila está vacía.</p>
-    <ol id="lista"></ol>
-    <button id="atender" type="button">Atender siguiente</button>
-  </section>
-
-  <p id="mensaje" role="status" aria-live="polite"></p>
-
-  <script>
-    const turnos = [];
-
-    const formulario = document.getElementById("formulario");
-    const campoNombre = document.getElementById("nombre");
-    const campoMotivo = document.getElementById("motivo");
-    const lista = document.getElementById("lista");
-    const siguiente = document.getElementById("siguiente");
-    const mensaje = document.getElementById("mensaje");
-    const botonAtender = document.getElementById("atender");
-
-    function mostrarTurnos() {
-      lista.innerHTML = "";
-
-      if (turnos.length === 0) {
-        siguiente.textContent = "La fila está vacía.";
-        return;
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+      name="description"
+      content="Administra turnos, revisa el historial y organiza la atención al público."
+    >
+    <meta name="theme-color" content="#f7f8f5">
+    <title>Fila de turnos | Panel de atención</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        color: #263b32;
+        background: #f7f8f5;
+        font-synthesis: none;
+        text-rendering: optimizeLegibility;
+        -webkit-font-smoothing: antialiased;
+        --green: #365f4d;
+        --green-dark: #294c3c;
+        --muted: #77817b;
+        --border: #e5e9e3;
+        --surface: #fff;
       }
 
-      siguiente.textContent =
-        "Siguiente: " + turnos[0].nombre + " - " + turnos[0].motivo;
-
-      for (let i = 0; i < turnos.length; i++) {
-        const elemento = document.createElement("li");
-        elemento.textContent = turnos[i].nombre + " - " + turnos[i].motivo;
-        lista.appendChild(elemento);
-      }
-    }
-
-    formulario.addEventListener("submit", function(evento) {
-      evento.preventDefault();
-
-      const nombre = campoNombre.value.trim();
-      const motivo = campoMotivo.value.trim();
-
-      if (nombre === "" || motivo === "") {
-        mensaje.textContent = "Escribe el nombre y el motivo.";
-        return;
+      * {
+        box-sizing: border-box;
       }
 
-      turnos.push({ nombre: nombre, motivo: motivo });
-      formulario.reset();
-      mostrarTurnos();
-      mensaje.textContent = "Turno agregado al final de la fila.";
-    });
-
-    botonAtender.addEventListener("click", function() {
-      if (turnos.length === 0) {
-        mensaje.textContent = "La fila está vacía. No hay personas por atender.";
-        return;
+      body {
+        min-width: 320px;
+        min-height: 100vh;
+        margin: 0;
       }
 
-      const personaAtendida = turnos.shift();
-      mostrarTurnos();
-      mensaje.textContent = "Se atendió a " + personaAtendida.nombre + ".";
-    });
+      button,
+      input {
+        font: inherit;
+      }
 
-    mostrarTurnos();
-  </script>
-</body>
+      button {
+        cursor: pointer;
+      }
+
+      button:focus-visible,
+      input:focus-visible {
+        outline: 3px solid #a9c5b1;
+        outline-offset: 2px;
+      }
+
+      .page {
+        width: min(100% - 40px, 1080px);
+        margin: 0 auto;
+        padding: 48px 0;
+      }
+
+      .page-header {
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 28px;
+      }
+
+      .eyebrow,
+      .stat-label,
+      .next-label {
+        color: #68816f;
+        font-size: 11px;
+        font-weight: 750;
+        letter-spacing: 1.3px;
+        text-transform: uppercase;
+      }
+
+      h1 {
+        margin: 7px 0;
+        color: #233b35;
+        font-size: clamp(32px, 5vw, 46px);
+        letter-spacing: -1.8px;
+        line-height: 1.1;
+      }
+
+      .page-header p,
+      .section-heading p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .date-badge {
+        flex: 0 0 auto;
+        padding: 10px 13px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: var(--surface);
+        color: #56665c;
+        font-size: 12px;
+      }
+
+      .stats {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+        margin-bottom: 20px;
+      }
+
+      .stat-card,
+      .panel {
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--surface);
+        box-shadow: 0 10px 30px rgb(34 57 49 / 4%);
+      }
+
+      .stat-card {
+        padding: 18px 20px;
+      }
+
+      .stat-value {
+        display: block;
+        margin-top: 8px;
+        color: #263e34;
+        font-size: 28px;
+        font-weight: 700;
+        letter-spacing: -1px;
+      }
+
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(250px, 0.78fr) minmax(0, 1.4fr);
+        align-items: start;
+        gap: 18px;
+      }
+
+      .panel {
+        padding: 23px;
+      }
+
+      .section-heading {
+        margin-bottom: 20px;
+      }
+
+      .section-heading h2 {
+        margin: 0 0 5px;
+        color: #293e34;
+        font-size: 18px;
+        letter-spacing: -0.3px;
+      }
+
+      .section-heading p {
+        font-size: 13px;
+      }
+
+      .turn-form {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .turn-form label {
+        margin: 0 0 7px;
+        color: #43534a;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .turn-form input,
+      .search-input {
+        width: 100%;
+        min-height: 43px;
+        padding: 10px 12px;
+        border: 1px solid #dfe5de;
+        border-radius: 8px;
+        background: #fff;
+        color: #293e34;
+        font-size: 13px;
+      }
+
+      .turn-form input {
+        margin-bottom: 17px;
+      }
+
+      input::placeholder {
+        color: #a0aaa2;
+      }
+
+      .button {
+        display: inline-flex;
+        min-height: 42px;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 9px 13px;
+        border: 1px solid transparent;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 700;
+        transition: background 140ms ease, border-color 140ms ease;
+      }
+
+      .button-primary {
+        background: var(--green);
+        color: #fff;
+      }
+
+      .button-primary:hover {
+        background: var(--green-dark);
+      }
+
+      .button-secondary {
+        border-color: #dfe5df;
+        background: #fff;
+        color: var(--green);
+      }
+
+      .button-secondary:hover {
+        background: #f4f7f3;
+      }
+
+      .button-danger {
+        border-color: #efdddd;
+        background: #fff;
+        color: #a34848;
+      }
+
+      .button-danger:hover {
+        background: #fff6f5;
+      }
+
+      .button-small {
+        min-height: 32px;
+        padding: 6px 9px;
+        font-size: 11px;
+      }
+
+      .queue-header,
+      .queue-actions,
+      .list-toolbar,
+      .list-toolbar-actions {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+      }
+
+      .queue-header {
+        margin-bottom: 16px;
+      }
+
+      .queue-header .section-heading {
+        margin: 0;
+      }
+
+      .next-turn {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+        margin-bottom: 18px;
+        padding: 16px 17px;
+        border: 1px solid #e2ebe2;
+        border-radius: 10px;
+        background: #f5f8f4;
+      }
+
+      .next-turn h3 {
+        margin: 7px 0 3px;
+        color: #293e34;
+        font-size: 18px;
+      }
+
+      .next-turn p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 12px;
+      }
+
+      .ticket-number {
+        color: #68816f;
+        font-size: 12px;
+        font-weight: 750;
+      }
+
+      .list-toolbar {
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+      }
+
+      .list-toolbar h3 {
+        margin: 0;
+        color: #34483d;
+        font-size: 13px;
+      }
+
+      .list-toolbar-actions {
+        flex: 1 1 240px;
+        justify-content: flex-end;
+      }
+
+      .search-input {
+        width: min(100%, 245px);
+        min-height: 36px;
+        padding: 7px 10px;
+      }
+
+      .turn-list,
+      .history-list {
+        max-height: 310px;
+        overflow-y: auto;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      .turn-item,
+      .history-item {
+        display: flex;
+        min-height: 63px;
+        align-items: center;
+        gap: 11px;
+        border-bottom: 1px solid #eff1ed;
+      }
+
+      .turn-position {
+        display: grid;
+        width: 34px;
+        height: 34px;
+        flex: 0 0 34px;
+        place-items: center;
+        border-radius: 9px;
+        background: #f1f4f0;
+        color: #66786b;
+        font-size: 10px;
+        font-weight: 750;
+      }
+
+      .turn-details {
+        display: flex;
+        min-width: 0;
+        flex: 1;
+        flex-direction: column;
+        gap: 3px;
+      }
+
+      .turn-details strong,
+      .turn-details span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .turn-details strong {
+        color: #35463d;
+        font-size: 13px;
+      }
+
+      .turn-details span {
+        color: #818b84;
+        font-size: 11px;
+      }
+
+      .empty-state {
+        margin: 0;
+        padding: 21px 8px;
+        color: #929b95;
+        font-size: 13px;
+        text-align: center;
+      }
+
+      .queue-actions {
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        margin-top: 15px;
+      }
+
+      .history-panel {
+        margin-top: 18px;
+      }
+
+      .history-panel summary {
+        color: #34483d;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      .history-content {
+        padding-top: 16px;
+      }
+
+      .history-item {
+        justify-content: space-between;
+        gap: 12px;
+        padding: 8px 0;
+      }
+
+      .history-time {
+        flex: 0 0 auto;
+        color: #929b95;
+        font-size: 11px;
+      }
+
+      .status-message {
+        min-height: 22px;
+        margin: 16px 0 0;
+        color: var(--green);
+        font-size: 12px;
+        text-align: center;
+      }
+
+      .status-message[data-error="true"] {
+        color: #a34848;
+      }
+
+      .storage-note {
+        margin-top: 8px;
+        color: #929b95;
+        font-size: 11px;
+        text-align: center;
+      }
+
+      @media (max-width: 760px) {
+        .page {
+          width: min(100% - 28px, 560px);
+          padding: 30px 0;
+        }
+
+        .page-header {
+          align-items: flex-start;
+          flex-direction: column;
+          gap: 12px;
+        }
+
+        .workspace {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .stats {
+          gap: 8px;
+        }
+
+        .stat-card {
+          padding: 13px 11px;
+        }
+
+        .stat-label {
+          font-size: 9px;
+          letter-spacing: 0.6px;
+        }
+
+        .stat-value {
+          font-size: 23px;
+        }
+
+        .panel {
+          padding: 18px;
+        }
+
+        .queue-header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .list-toolbar-actions {
+          justify-content: stretch;
+        }
+
+        .search-input {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <header class="page-header">
+        <div>
+          <span class="eyebrow">Panel de atención</span>
+          <h1>Fila de turnos</h1>
+          <p>Organiza la atención de forma sencilla y en orden de llegada.</p>
+        </div>
+        <time class="date-badge" id="fecha"></time>
+      </header>
+
+      <section class="stats" aria-label="Resumen de turnos">
+        <article class="stat-card">
+          <span class="stat-label">En espera</span>
+          <strong class="stat-value" id="total-espera">0</strong>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Atendidos</span>
+          <strong class="stat-value" id="total-atendidos">0</strong>
+        </article>
+        <article class="stat-card">
+          <span class="stat-label">Siguiente turno</span>
+          <strong class="stat-value" id="proximo-numero">---</strong>
+        </article>
+      </section>
+
+      <div class="workspace">
+        <section class="panel" aria-labelledby="add-heading">
+          <div class="section-heading">
+            <h2 id="add-heading">Agregar a la fila</h2>
+            <p>Registra a la persona y el motivo de consulta.</p>
+          </div>
+          <form class="turn-form" id="formulario">
+            <label for="nombre">Nombre</label>
+            <input
+              id="nombre"
+              name="nombre"
+              type="text"
+              maxlength="80"
+              placeholder="Ej. Ana García"
+              autocomplete="name"
+              required
+            >
+
+            <label for="motivo">Motivo de consulta</label>
+            <input
+              id="motivo"
+              name="motivo"
+              type="text"
+              maxlength="120"
+              placeholder="Ej. Consulta general"
+              required
+            >
+
+            <button class="button button-primary" type="submit">
+              <span aria-hidden="true">＋</span> Agregar turno
+            </button>
+          </form>
+        </section>
+
+        <section class="panel" aria-labelledby="queue-heading">
+          <div class="queue-header">
+            <div class="section-heading">
+              <h2 id="queue-heading">Personas en espera</h2>
+              <p>Los turnos se atienden en orden de llegada.</p>
+            </div>
+            <button class="button button-secondary button-small" id="exportar" type="button">
+              Exportar CSV
+            </button>
+          </div>
+
+          <div class="next-turn" aria-live="polite">
+            <div>
+              <span class="next-label">Siguiente en la fila</span>
+              <h3 id="siguiente-nombre">La fila está vacía</h3>
+              <p id="siguiente-motivo">Agrega una persona para comenzar.</p>
+            </div>
+            <span class="ticket-number" id="siguiente-ticket"></span>
+          </div>
+
+          <div class="list-toolbar">
+            <h3>Turnos pendientes</h3>
+            <div class="list-toolbar-actions">
+              <input
+                class="search-input"
+                id="buscar"
+                type="search"
+                placeholder="Buscar por nombre, motivo o turno"
+                aria-label="Buscar en los turnos pendientes"
+              >
+            </div>
+          </div>
+
+          <ol class="turn-list" id="lista" aria-live="polite"></ol>
+          <p class="empty-state" id="estado-vacio">Todavía no hay turnos registrados.</p>
+
+          <div class="queue-actions">
+            <button class="button button-primary" id="atender" type="button">
+              Atender siguiente <span aria-hidden="true">→</span>
+            </button>
+            <button class="button button-danger button-small" id="vaciar" type="button">
+              Vaciar fila
+            </button>
+          </div>
+        </section>
+      </div>
+
+      <details class="panel history-panel" id="panel-historial">
+        <summary>Historial reciente <span id="contador-historial"></span></summary>
+        <div class="history-content">
+          <ul class="history-list" id="historial"></ul>
+          <p class="empty-state" id="historial-vacio">Todavía no se han atendido turnos.</p>
+        </div>
+      </details>
+
+      <p class="status-message" id="mensaje" role="status" aria-live="polite"></p>
+      <p class="storage-note">Los datos se guardan en este navegador y dispositivo.</p>
+    </main>
+
+    <script>
+      const STORAGE_KEY = "fila-de-turnos-v1";
+      const MAX_HISTORIAL = 100;
+      const formulario = document.getElementById("formulario");
+      const campoNombre = document.getElementById("nombre");
+      const campoMotivo = document.getElementById("motivo");
+      const campoBusqueda = document.getElementById("buscar");
+      const lista = document.getElementById("lista");
+      const historial = document.getElementById("historial");
+      const mensaje = document.getElementById("mensaje");
+
+      function esTurnoValido(turno) {
+        return (
+          turno !== null &&
+          typeof turno === "object" &&
+          Number.isSafeInteger(turno.id) &&
+          turno.id > 0 &&
+          typeof turno.nombre === "string" &&
+          typeof turno.motivo === "string" &&
+          typeof turno.creadoEn === "string"
+        );
+      }
+
+      function cargarEstado() {
+        const inicial = { turnos: [], historial: [], siguienteId: 1 };
+
+        try {
+          const guardado = localStorage.getItem(STORAGE_KEY);
+          if (guardado === null) return { estado: inicial, aviso: "" };
+
+          const datos = JSON.parse(guardado);
+          if (
+            datos === null ||
+            typeof datos !== "object" ||
+            !Array.isArray(datos.turnos) ||
+            !Array.isArray(datos.historial) ||
+            !Number.isSafeInteger(datos.siguienteId) ||
+            datos.siguienteId < 1 ||
+            !datos.turnos.every(esTurnoValido) ||
+            !datos.historial.every(
+              (turno) => esTurnoValido(turno) && typeof turno.atendidoEn === "string",
+            )
+          ) {
+            return {
+              estado: inicial,
+              aviso: "Los datos guardados no son válidos. Se inició una fila nueva.",
+            };
+          }
+
+          return {
+            estado: {
+              turnos: datos.turnos,
+              historial: datos.historial.slice(0, MAX_HISTORIAL),
+              siguienteId: datos.siguienteId,
+            },
+            aviso: "",
+          };
+        } catch (error) {
+          console.error("No se pudieron cargar los turnos guardados:", error);
+          return {
+            estado: inicial,
+            aviso: "No se pudieron leer los datos guardados. Revisa la configuración del navegador.",
+          };
+        }
+      }
+
+      const cargaInicial = cargarEstado();
+      let turnos = cargaInicial.estado.turnos;
+      let turnosAtendidos = cargaInicial.estado.historial;
+      let siguienteId = cargaInicial.estado.siguienteId;
+      let errorDeGuardado = false;
+
+      function mostrarMensaje(texto, esError = false) {
+        mensaje.textContent = texto;
+        mensaje.dataset.error = String(esError);
+      }
+
+      function guardarEstado() {
+        try {
+          localStorage.setItem(
+            STORAGE_KEY,
+            JSON.stringify({
+              turnos,
+              historial: turnosAtendidos.slice(0, MAX_HISTORIAL),
+              siguienteId,
+            }),
+          );
+          errorDeGuardado = false;
+          return true;
+        } catch (error) {
+          console.error("No se pudieron guardar los turnos:", error);
+          errorDeGuardado = true;
+          mostrarMensaje(
+            "No se pudieron guardar los cambios. Revisa el espacio y los permisos del navegador.",
+            true,
+          );
+          return false;
+        }
+      }
+
+      function crearElemento(tag, texto, clase) {
+        const elemento = document.createElement(tag);
+        elemento.textContent = texto;
+        if (clase) elemento.className = clase;
+        return elemento;
+      }
+
+      function formatearHora(fecha) {
+        return new Intl.DateTimeFormat("es", {
+          hour: "2-digit",
+          minute: "2-digit",
+        }).format(new Date(fecha));
+      }
+
+      function renderizar() {
+        const consulta = campoBusqueda.value.trim().toLocaleLowerCase("es");
+        const turnosVisibles = turnos.filter((turno) =>
+          `${turno.id} ${turno.nombre} ${turno.motivo}`
+            .toLocaleLowerCase("es")
+            .includes(consulta),
+        );
+
+        lista.replaceChildren();
+        for (const [indice, turno] of turnosVisibles.entries()) {
+          const elemento = document.createElement("li");
+          elemento.className = "turn-item";
+
+          const posicion = crearElemento(
+            "span",
+            `#${String(turno.id).padStart(3, "0")}`,
+            "turn-position",
+          );
+          const detalles = document.createElement("div");
+          detalles.className = "turn-details";
+          detalles.append(
+            crearElemento("strong", turno.nombre),
+            crearElemento("span", `${turno.motivo} · Registrado ${formatearHora(turno.creadoEn)}`),
+          );
+          const quitar = crearElemento("button", "Quitar", "button button-danger button-small");
+          quitar.type = "button";
+          quitar.setAttribute("aria-label", `Quitar el turno de ${turno.nombre}`);
+          quitar.addEventListener("click", () => quitarTurno(turno.id));
+          elemento.append(posicion, detalles, quitar);
+          lista.appendChild(elemento);
+        }
+
+        document.getElementById("estado-vacio").hidden = turnosVisibles.length > 0;
+        document.getElementById("estado-vacio").textContent =
+          turnos.length === 0
+            ? "Todavía no hay turnos registrados."
+            : "No hay turnos que coincidan con la búsqueda.";
+        document.getElementById("total-espera").textContent = turnos.length;
+        document.getElementById("total-atendidos").textContent = turnosAtendidos.length;
+
+        const siguiente = turnos[0];
+        document.getElementById("proximo-numero").textContent = siguiente
+          ? `#${String(siguiente.id).padStart(3, "0")}`
+          : "---";
+        document.getElementById("siguiente-nombre").textContent = siguiente
+          ? siguiente.nombre
+          : "La fila está vacía";
+        document.getElementById("siguiente-motivo").textContent = siguiente
+          ? siguiente.motivo
+          : "Agrega una persona para comenzar.";
+        document.getElementById("siguiente-ticket").textContent = siguiente
+          ? `TURNO #${String(siguiente.id).padStart(3, "0")}`
+          : "";
+        document.getElementById("atender").disabled = turnos.length === 0;
+        document.getElementById("vaciar").disabled = turnos.length === 0;
+
+        historial.replaceChildren();
+        for (const turno of turnosAtendidos) {
+          const elemento = document.createElement("li");
+          elemento.className = "history-item";
+          const detalles = document.createElement("div");
+          detalles.className = "turn-details";
+          detalles.append(
+            crearElemento(
+              "strong",
+              `#${String(turno.id).padStart(3, "0")} · ${turno.nombre}`,
+            ),
+            crearElemento("span", turno.motivo),
+          );
+          elemento.append(
+            detalles,
+            crearElemento("time", formatearHora(turno.atendidoEn), "history-time"),
+          );
+          historial.appendChild(elemento);
+        }
+
+        document.getElementById("historial-vacio").hidden = turnosAtendidos.length > 0;
+        document.getElementById("contador-historial").textContent =
+          turnosAtendidos.length > 0 ? `(${turnosAtendidos.length})` : "";
+      }
+
+      function agregarTurno(evento) {
+        evento.preventDefault();
+        const nombre = campoNombre.value.trim();
+        const motivo = campoMotivo.value.trim();
+
+        if (!nombre || !motivo) {
+          mostrarMensaje("Completa el nombre y el motivo para agregar un turno.", true);
+          return;
+        }
+
+        turnos.push({
+          id: siguienteId,
+          nombre,
+          motivo,
+          creadoEn: new Date().toISOString(),
+        });
+        siguienteId += 1;
+        guardarEstado();
+        formulario.reset();
+        renderizar();
+        if (!errorDeGuardado) {
+          mostrarMensaje(`Turno #${String(siguienteId - 1).padStart(3, "0")} agregado a la fila.`);
+        }
+        campoNombre.focus();
+      }
+
+      function atenderSiguiente() {
+        if (turnos.length === 0) {
+          mostrarMensaje("La fila está vacía. No hay personas por atender.", true);
+          return;
+        }
+
+        const atendido = turnos.shift();
+        turnosAtendidos.unshift({ ...atendido, atendidoEn: new Date().toISOString() });
+        turnosAtendidos = turnosAtendidos.slice(0, MAX_HISTORIAL);
+        guardarEstado();
+        renderizar();
+        if (!errorDeGuardado) mostrarMensaje(`Se atendió a ${atendido.nombre}.`);
+      }
+
+      function quitarTurno(id) {
+        const turno = turnos.find((item) => item.id === id);
+        if (!turno) return;
+
+        turnos = turnos.filter((item) => item.id !== id);
+        guardarEstado();
+        renderizar();
+        if (!errorDeGuardado) mostrarMensaje(`Se quitó el turno de ${turno.nombre}.`);
+      }
+
+      function vaciarFila() {
+        if (turnos.length === 0) return;
+        if (!window.confirm("¿Quieres quitar todos los turnos pendientes?")) return;
+
+        const totalQuitados = turnos.length;
+        turnos = [];
+        guardarEstado();
+        renderizar();
+        if (!errorDeGuardado) mostrarMensaje(`Se quitaron ${totalQuitados} turnos pendientes.`);
+      }
+
+      function exportarCsv() {
+        if (turnos.length === 0 && turnosAtendidos.length === 0) {
+          mostrarMensaje("No hay turnos para exportar.", true);
+          return;
+        }
+
+        const escapar = (valor) => `"${String(valor).replaceAll('"', '""')}"`;
+        const filas = [
+          ["Estado", "Turno", "Nombre", "Motivo", "Registrado", "Atendido"],
+          ...turnos.map((turno) => [
+            "Pendiente",
+            turno.id,
+            turno.nombre,
+            turno.motivo,
+            turno.creadoEn,
+            "",
+          ]),
+          ...turnosAtendidos.map((turno) => [
+            "Atendido",
+            turno.id,
+            turno.nombre,
+            turno.motivo,
+            turno.creadoEn,
+            turno.atendidoEn,
+          ]),
+        ];
+        const csv = "\uFEFF" + filas.map((fila) => fila.map(escapar).join(",")).join("\r\n");
+        const archivo = new Blob([csv], { type: "text/csv;charset=utf-8" });
+        const url = URL.createObjectURL(archivo);
+        const enlace = document.createElement("a");
+        enlace.href = url;
+        enlace.download = `turnos-${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(enlace);
+        enlace.click();
+        enlace.remove();
+        URL.revokeObjectURL(url);
+        mostrarMensaje("Se descargó el archivo CSV con los turnos.");
+      }
+
+      formulario.addEventListener("submit", agregarTurno);
+      document.getElementById("atender").addEventListener("click", atenderSiguiente);
+      document.getElementById("vaciar").addEventListener("click", vaciarFila);
+      document.getElementById("exportar").addEventListener("click", exportarCsv);
+      campoBusqueda.addEventListener("input", renderizar);
+      document.getElementById("fecha").textContent = new Intl.DateTimeFormat("es", {
+        dateStyle: "full",
+      }).format(new Date());
+
+      renderizar();
+      if (cargaInicial.aviso) mostrarMensaje(cargaInicial.aviso, true);
+    </script>
+  </body>
 </html>
